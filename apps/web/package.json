@@ -12,6 +12,8 @@
   },
   "dependencies": {
     "@repo/ui": "workspace:*",
+    "@types/jsonwebtoken": "^9.0.9",
+    "jsonwebtoken": "^9.0.2",
     "next": "^15.2.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
