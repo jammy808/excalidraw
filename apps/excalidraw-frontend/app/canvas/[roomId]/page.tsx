@@ -16,6 +16,9 @@ export default function Canvas(){
                 return;
             }
 
+            ctx.fillStyle = "rgba(0,0,0)";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
             let clicked = false;
             let startX = 0;
             let startY = 0;
@@ -36,6 +39,9 @@ export default function Canvas(){
                     const height = e.clientY - startY;
 
                     ctx.clearRect(0,0 , canvas.width , canvas.height);
+                    ctx.fillStyle = "rgba(0,0,0)";
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    ctx.strokeStyle = "rgba(255 , 255 , 255";
                     ctx.strokeRect(startX, startY, width, height);
                 }
             })
@@ -45,7 +51,7 @@ export default function Canvas(){
 
     return(
         <div>
-            <canvas ref={canvasRef} width={500} height={500}></canvas>
+            <canvas ref={canvasRef} width={2000} height={1000}></canvas>
         </div>
     )
 }
