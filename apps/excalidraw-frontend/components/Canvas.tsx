@@ -15,8 +15,8 @@ export default function Canvas({roomId , socket} : {roomId : string; socket : We
     } , [canvasRef]);
 
     return(
-        <div>
-            <canvas ref={canvasRef} width={2000} height={1000}></canvas>
+        <div className="h-full overflow-hidden">
+            <canvas ref={canvasRef} width={window.innerWidth} height={window.innerHeight}></canvas>
         </div>
     )
 }
