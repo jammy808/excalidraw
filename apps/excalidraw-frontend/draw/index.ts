@@ -10,9 +10,10 @@ type Shape = {
 } | 
 {
     type : "circle";
-    centerX : number;
-    centerY : number;
-    radius : number;
+    x : number;
+    y : number;
+    width : number;
+    height : number
 }
 
 export default async function initDraw(canvas : HTMLCanvasElement , roomId : string , socket : WebSocket){
@@ -51,7 +52,8 @@ export default async function initDraw(canvas : HTMLCanvasElement , roomId : str
         const width = e.clientX - startX;
         const height = e.clientY - startY;
         const shape : Shape = {
-            type : "rect",
+            //@ts-ignore
+            type : window.selectedTool,
             x : startX,
             y : startY,
             width : width,
@@ -77,7 +79,24 @@ export default async function initDraw(canvas : HTMLCanvasElement , roomId : str
             clearCanvas(existingShapes , canvas , ctx);
 
             ctx.strokeStyle = "rgba(255 , 255 , 255";
-            ctx.strokeRect(startX, startY, width, height);
+            //@ts-ignore
+            const selectedTool = window.selectedTool;
+            if(selectedTool === "rect"){
+                ctx.strokeRect(startX, startY, width, height);
+            }
+            else if(selectedTool === "circle"){
+                ctx.beginPath();
+                ctx.ellipse(
+                    startX + width/2, // centerX
+                    startY + height/2, // centerY
+                    Math.abs(width/2), // horizontal radius
+                    Math.abs(height/2), // vertical radius
+                    0,0, // angles
+                    2*Math.PI
+                )
+                ctx.stroke();
+                ctx.closePath();
+            }
         }
     })
 }
@@ -91,7 +110,20 @@ function clearCanvas(existingShapes : Shape[] , canvas : HTMLCanvasElement , ctx
         if(shape.type === "rect"){
             ctx.strokeStyle = "rgba(255 , 255 , 255";
             ctx.strokeRect(shape.x, shape.y, shape.width, shape.height);
+        }else if(shape.type === "circle"){
+            ctx.beginPath();
+            ctx.ellipse(
+                shape.x + shape.width/2, // centerX
+                shape.y + shape.height/2, // centerY
+                Math.abs(shape.width/2), // horizontal radius
+                Math.abs(shape.height/2), // vertical radius
+                0,0, // angles
+                2*Math.PI
+            )
+            ctx.stroke();
+            ctx.closePath();
         }
+
     })
 }
 
