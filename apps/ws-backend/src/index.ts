@@ -55,7 +55,6 @@ wss.on('connection' , function connection(ws , request){
 
     ws.on('message' , async function message(data){
         const parsedData = JSON.parse(data.toString());
-        console.log(parsedData);
 
         if(parsedData.type === "join_room"){
             const user = users.find(x => x.ws === ws);
@@ -72,21 +71,42 @@ wss.on('connection' , function connection(ws , request){
         if(parsedData.type === "chat"){
             const roomId = parsedData.roomId;
             const message = parsedData.message;
+            const chatId = parsedData.chatId;
 
-            await prismaClient.chat.create({
+            const res = await prismaClient.chat.create({
                 data : {
+                    id : chatId,
                     roomId : Number(roomId),
                     message,
                     userId
                 }
             })
 
+            console.log(res);
+
             users.forEach(user => {
-                if(user.rooms.includes(roomId)){
+                if(user.rooms.includes(roomId) && user.ws !== ws){
                     user.ws.send(JSON.stringify({
                         type : "chat",
                         message : message,
                         roomId
+                    }))
+                }
+            })
+        }
+
+        if(parsedData.type === "erase"){
+            const roomId = parsedData.roomId;
+            const res = await prismaClient.chat.delete({
+                where : {
+                    id : parsedData.id
+                }
+            })
+
+            users.forEach(user => {
+                if(user.rooms.includes(roomId) && user.ws !== ws){
+                    user.ws.send(JSON.stringify({
+                        type : "re-fetch",
                     }))
                 }
             })
