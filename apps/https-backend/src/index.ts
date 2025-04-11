@@ -1,74 +1,76 @@
 import express from "express";
 import jwt from "jsonwebtoken";
 import { JWT_SECRET } from "@repo/backend-common/config";
-import { middleware } from "./middleware";
+import { middleware, verifyFirebaseToken } from "./middleware";
 import { CreateUserSchema , SigninSchema , CreateRoomSchema} from "@repo/common/types"
 import { prismaClient } from "@repo/db/client"
 import cors from "cors"
+import { adminAuth } from "./lib/firebase-admin";
 
 const app = express();
 app.use(express.json());
 app.use(cors());
 
-app.post("/signup" , async (req , res) => {
-    const parsedData = CreateUserSchema.safeParse(req.body);
-    
-    if(!parsedData.success){
-        res.json({
-            message : "Incorrect Inputs"
-        })
-        return;
+app.post("/signup", verifyFirebaseToken, async (req, res) => {
+    const { name , email } = req.body;
+    try {
+        const user = await prismaClient.user.upsert({
+        where: { email },
+        update: {},
+        create: {
+            email,
+            name: name || "",
+            password : ""
+        },
+        });
+        
+        res.json({ userId: user.id });
+    } catch (e) {
+        res.status(500).json({ message: "Failed to create user in DB" });
     }
+});
+
+app.post("/signin" , verifyFirebaseToken , async (req , res) => { 
+    const {email , user_id} = (req as any).user;
 
     try{
-        const user = await prismaClient.user.create({
-            data : {
-                email : parsedData.data?.username,
-                password : parsedData.data.password,
-                name : parsedData.data.name
-            }
+        const user = await prismaClient.user.findUnique({
+            where: {email}
         })
 
-        res.json({
-            userId : user.id
-        })
-
-    }catch(e){
-        res.status(411).json({
-            message : "Failed singing up"
-        })
+        res.json({userId : user?.id});
+    } catch (e) {
+        res.status(500).json({ message: "Failed to find user in DB" });
     }
-
 })
 
-app.post("/signin" , async (req , res) => {
-    const parsedData = SigninSchema.safeParse(req.body);
-    
-    if(!parsedData.success){
-        res.json({
-            message : "Incorrect Inputs"
-        })
-        return;
+app.post("/auth/google", async (req, res) => {
+    const { idToken } = req.body;
+  
+    try {
+      const decoded = await adminAuth.verifyIdToken(idToken);
+  
+      const user = await prismaClient.user.upsert({
+        where: { email: decoded.email },
+        update: {}, // or update name/photo if needed
+        create: {
+          email: decoded.email || "",
+          name: decoded.name || "No Name",
+          password : ""
+        },
+      });
+  
+      // Optionally, create your own JWT or session here
+      const token = jwt.sign({ userId: user.id }, JWT_SECRET);
+  
+      res.json({ token, userId: user.id });
+  
+    } catch (err) {
+      console.error(err);
+      res.status(401).json({ message: "Invalid Google token" });
     }
-
-    const user = await prismaClient.user.findFirst({
-        where : {
-            email : parsedData.data.username,
-            password : parsedData.data.password 
-        }
-    })
-
-    if(!user){
-        res.status(403).json({
-            message : "Not Authorized"
-        })
-    }
-
-    const token = jwt.sign({userId : user?.id} , JWT_SECRET);
-
-    res.json({ token });
-})
-
+});
+  
 app.post("/room" , middleware , async (req , res) => {
     const parsedData = CreateRoomSchema.safeParse(req.body);
     
