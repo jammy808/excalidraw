@@ -1,5 +1,15 @@
-import AuthPage from "@/components/AuthPage";
+import AuthLayout from "@/components/auth/AuthLayout";
+import SignUpForm from "@/components/auth/SignUpForm";
 
-export default function Signup() {
-    return <AuthPage isSignin={false} />
-}
+const SignUp = () => {
+    return (
+      <AuthLayout 
+        title="Create your account" 
+        description="Join DoodleSync and start collaborating"
+      >
+        <SignUpForm />
+      </AuthLayout>
+    );
+  };
+  
+  export default SignUp;
