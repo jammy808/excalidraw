@@ -71,29 +71,23 @@ app.post("/auth/google", async (req, res) => {
     }
 });
   
-app.post("/room" , middleware , async (req , res) => {
-    const parsedData = CreateRoomSchema.safeParse(req.body);
-    
-    if(!parsedData.success){
-        res.json({
-            message : "Incorrect Inputs"
-        })
-        return;
-    }
-
+app.post("/room" , verifyFirebaseToken , async (req , res) => {
+    const { name } = req.body;
+   
     //@ts-ignore : fix this properly usig global ts file something..
     const userId = req.userId;
 
     try{
         const room = await prismaClient.room.create({
             data : {
-                slug : parsedData.data.name,
-                adminId : userId 
+                slug : name,
+                adminId : "d1cd3743-d1fc-47ba-bd9d-37d040a3354b"
             }
         })
     
-        res.json({
-            roomId : room.id
+        res.status(200).json({
+            name,
+            id : room.id
         })
 
     }catch(e){
