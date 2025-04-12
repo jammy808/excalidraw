@@ -12,18 +12,8 @@ import { onAuthStateChanged } from 'firebase/auth';
 const Dashboard = () => {
   const router = useRouter();
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (!user) {
-        router.replace("/signin");
-      }
-    });
-
-    return () => unsubscribe(); // clean up on unmount
-  }, [router]);
-
   const [loading, setLoading] = useState(true);
-  const [rooms, setRooms] = useState<Array<{id: string, name: string}>>([]);
+  const [rooms, setRooms] = useState<Array<{id: string, slug: string}>>([]);
   
   // Dialog states
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -31,19 +21,37 @@ const Dashboard = () => {
   const [newRoomName, setNewRoomName] = useState('');
   const [roomIdToJoin, setRoomIdToJoin] = useState('');
 
-  // Simulate loading data
-  React.useEffect(() => {
-    // Simulate API call
-    const timer = setTimeout(() => {
-      setRooms([
-        { id: '1', name: 'Project Wireframes' },
-        { id: '2', name: 'UI Mockups'},
-        { id: '3', name: 'Logo Design'},
-      ]);
+  const getRooms = async () => {
+    try {
+      onAuthStateChanged(auth, async (user) => {
+        if (!user) {
+          router.push("/signin");
+          return;
+        }
+  
+        const token = await user.getIdToken();
+        console.log("Token:", token);
+  
+        const res = await fetch(`${BACKEND_URL}/getAllRooms`, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+  
+        const rooms = await res.json();
+        console.log(rooms);
+        setRooms(rooms);
+        setLoading(false);
+      });
+    } catch (error) {
+      console.error("Error fetching rooms:", error);
       setLoading(false);
-    }, 1500);
-    
-    return () => clearTimeout(timer);
+    }
+  };
+
+  useEffect(() => {
+    getRooms();
   }, []);
 
   const handleLogout = () => {
@@ -134,11 +142,11 @@ const Dashboard = () => {
             </>
           ) : (
             <>
-              {rooms.map(room => (
+              {rooms.length > 0 && rooms.map(room => (
                 <DrawingRoomCard 
                   key={room.id}
                   id={room.id}
-                  name={room.name}
+                  name={room.slug}
                   participants={0}
                 />
               ))}
