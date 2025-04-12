@@ -12,12 +12,14 @@ app.use(express.json());
 app.use(cors());
 
 app.post("/signup", verifyFirebaseToken, async (req, res) => {
+    const {user_id} = (req as any).user;
     const { name , email } = req.body;
     try {
         const user = await prismaClient.user.upsert({
         where: { email },
         update: {},
         create: {
+            id : user_id,
             email,
             name: name || "",
             password : ""
@@ -54,6 +56,7 @@ app.post("/auth/google", async (req, res) => {
         where: { email: decoded.email },
         update: {}, // or update name/photo if needed
         create: {
+          id : decoded.user_id,
           email: decoded.email || "",
           name: decoded.name || "No Name",
           password : ""
@@ -72,6 +75,7 @@ app.post("/auth/google", async (req, res) => {
 });
   
 app.post("/room" , verifyFirebaseToken , async (req , res) => {
+    const {user_id} = (req as any).user;
     const { name } = req.body;
    
     //@ts-ignore : fix this properly usig global ts file something..
@@ -81,7 +85,7 @@ app.post("/room" , verifyFirebaseToken , async (req , res) => {
         const room = await prismaClient.room.create({
             data : {
                 slug : name,
-                adminId : "d1cd3743-d1fc-47ba-bd9d-37d040a3354b"
+                adminId : user_id
             }
         })
     
@@ -94,6 +98,20 @@ app.post("/room" , verifyFirebaseToken , async (req , res) => {
         res.status(411).json({
             message : "Error creating room"
         })
+    }
+})
+
+app.get("/getAllRooms" , verifyFirebaseToken , async(req , res) => {
+    const {user_id} = (req as any).user;
+
+    try{
+        const rooms = await prismaClient.room.findMany({
+            where : {adminId : user_id}
+        })
+
+        res.status(200).json(rooms);
+    } catch(err){
+        res.status(401).json({ message: "Failed to get rooms" , err});
     }
 })
 
