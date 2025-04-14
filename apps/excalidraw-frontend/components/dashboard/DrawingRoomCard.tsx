@@ -1,5 +1,5 @@
 import React from 'react';
-//import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/navigation';
 import { Users } from 'lucide-react';
 
 interface DrawingRoomCardProps {
@@ -9,7 +9,7 @@ interface DrawingRoomCardProps {
 }
 
 const DrawingRoomCard = ({ id, name, participants }: DrawingRoomCardProps) => {
-  //const navigate = useNavigate();
+  const router = useRouter();
   
   // Generate a random gradient for each card
   const gradients = [
@@ -22,9 +22,7 @@ const DrawingRoomCard = ({ id, name, participants }: DrawingRoomCardProps) => {
   const randomGradient = gradients[Math.floor(Math.random() * gradients.length)];
   
   const handleClick = () => {
-    // Future implementation - navigate to the drawing room
-    console.log(`Navigating to room: ${id}`);
-    // navigate(`/room/${id}`);
+    router.push(`/canvas/${id}`);
   };
   
   return (
