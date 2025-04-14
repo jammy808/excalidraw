@@ -7,7 +7,7 @@ import DrawingRoomSkeleton from '@/components/dashboard/DrawingRoomSkeleton';
 import { useRouter } from 'next/navigation';
 import { BACKEND_URL } from '@/config';
 import { auth } from '@/app/firebase';
-import { onAuthStateChanged } from 'firebase/auth';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
 
 const Dashboard = () => {
   const router = useRouter();
@@ -54,8 +54,13 @@ const Dashboard = () => {
     getRooms();
   }, []);
 
-  const handleLogout = () => {
-    // For now just redirect to sign in
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      router.push('/signin');
+    } catch (err) {
+      console.error("Logout failed", err);
+    }
   };
 
   const handleCreateRoom = async () => {
